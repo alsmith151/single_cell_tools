@@ -131,7 +131,10 @@ pub fn split_bam(
         .map(|k| k.to_owned())
         .collect::<Vec<String>>();
 
-    let n_threads = n_threads / samples.len() as usize;
+    let n_threads = match n_threads / samples.len() as usize {
+        0 => 1,
+        n => n,
+    };
 
     samples.par_iter().for_each(|sample| {
         let mut bam_files = vec![];
