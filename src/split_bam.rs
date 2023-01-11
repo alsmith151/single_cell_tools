@@ -149,9 +149,9 @@ pub fn split_bam(
     });
 
     // remove the sample directories
-    for sample in samples {
-        std::fs::remove_dir_all(format!("{}/{}", output_prefix, sample)).unwrap();
-    }
+    // for sample in samples {
+    //     std::fs::remove_dir_all(format!("{}/{}", output_prefix, sample)).unwrap();
+    // }
     
 
     Ok(())
