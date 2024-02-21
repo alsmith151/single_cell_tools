@@ -1,10 +1,11 @@
 use rayon::prelude::*;
-use rust_htslib::{bam, bam::record::Aux, bam::Header, bam::Read, errors::Error};
+use rust_htslib::{bam, bam::record::Aux, bam::Header, bam::Read};
 use std::fs::File;
 use std::io::prelude::*;
 use std::str::from_utf8;
 use std::str::{Bytes, FromStr};
 use std::{collections::HashMap, result};
+use tempdir::TempDir;
 
 fn split_region_reads_on_barcodes(
     bam: String,
@@ -67,7 +68,6 @@ fn split_region_reads_on_barcodes(
     Ok(bam_files)
 }
 
-
 fn merge_bam_files(
     bam_files: Vec<String>,
     output: String,
@@ -88,8 +88,6 @@ fn merge_bam_files(
 
         // remove bam file
         std::fs::remove_file(&bam_file).unwrap();
-
-
     }
 
     Ok(())
@@ -102,10 +100,11 @@ pub fn split_bam(
     n_threads: usize,
     output_prefix: String,
 ) -> Result<(), Error> {
-
     // Split the bam file into separate bam files for each chromosome
     // Merge the bam files for each sample together
 
+    let tmp_dir_prefix = format!("split_{}", &bam_file);
+    let tmp_dir = TempDir::new(&tmp_dir_prefix)?;
 
     let bam = bam::IndexedReader::from_path(&bam_file).unwrap();
     let header = bam.header();
@@ -115,15 +114,18 @@ pub fn split_bam(
         .map(|c| String::from_utf8(c.to_vec()).expect("Cannot read chromosome name"))
         .collect();
 
-    chromosomes.par_iter().for_each(|chromosome| {
-        split_region_reads_on_barcodes(
-            bam_file.to_owned(),
-            barcodes.to_owned(),
-            chromosome.to_owned(),
-            output_prefix.to_owned(),
-        )
-        .unwrap();
-    });
+    chromosomes
+        .par_iter()
+        .for_each(|chromosome| {
+            split_region_reads_on_barcodes(
+                bam_file.to_owned(),
+                barcodes.to_owned(),
+                chromosome.to_owned(),
+                tmp_dir.path().to_str().unwrap().to_owned(),
+            );
+        })
+        .filter(|x| x.is_err())
+        .for_each(|x| x.unwrap());
 
     // Merge the bam files for each chromosome together
     let samples = barcodes
@@ -150,12 +152,6 @@ pub fn split_bam(
         )
         .unwrap();
     });
-
-    // remove the sample directories
-    // for sample in samples {
-    //     std::fs::remove_dir_all(format!("{}/{}", output_prefix, sample)).unwrap();
-    // }
-    
 
     Ok(())
 }
