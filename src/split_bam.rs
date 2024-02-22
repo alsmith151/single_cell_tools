@@ -1,17 +1,17 @@
 use rayon::prelude::*;
 // use rust_htslib::{bam, bam::record::Aux, bam::Header, bam::Read};
-use anyhow::{Error, Result};
-use crossbeam::channel;
+use anyhow::{Result};
+
 use noodles::{bam, bgzf, sam};
 use sam::alignment::record::data::field::value::Value;
 use std::fs::File;
-use std::io::prelude::*;
+
 use std::path::PathBuf;
 use std::str::from_utf8;
-use std::str::{Bytes, FromStr};
-use std::{collections::HashMap, result};
+use std::str::{FromStr};
+use std::{collections::HashMap};
 use tempdir::TempDir;
-use pyo3::prelude::*;
+
 
 
 pub struct SampleBarcodes {
@@ -112,7 +112,7 @@ impl SplitBam {
         let chromosomes = header
             .reference_sequences()
             .iter()
-            .map(|(chrom, map)| chrom.to_string())
+            .map(|(chrom, _map)| chrom.to_string())
             .collect();
 
         Ok(chromosomes)
@@ -204,7 +204,7 @@ impl SplitBam {
         > = bam_files
             .iter()
             .map(|(sample, path)| {
-                let header = header.to_owned();
+                let _header = header.to_owned();
                 let file = File::create(path).expect("Cannot create file");
                 let writer = std::io::BufWriter::new(file);
                 let bam_writer = bam::io::Writer::new(writer);

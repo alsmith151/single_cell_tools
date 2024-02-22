@@ -26,7 +26,7 @@ impl BamSplitter {
         }
     }
 
-    fn split(&self, n_threads: usize) -> PyResult<()> {
+    fn split(&self, _n_threads: usize) -> PyResult<()> {
         let barcodes: Vec<split_bam::SampleBarcodes> = self
             .barcodes
             .iter()
